@@ -2,6 +2,11 @@
 
 Implementação de referência para o desafio de processamento de pedidos utilizando Java (Spring Boot), arquitetura em camadas (MVC) e documentação via Swagger.
 
+## Fluxo de trabalho
+
+- Branch principal usada neste repositório: `develop`.
+- Commits seguem o padrão Conventional Commits (ex.: `feat(pedidos): ...`).
+
 ## Tecnologias
 - Java 25
 - Spring Boot 3
