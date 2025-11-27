@@ -4,7 +4,7 @@ Implementação de referência para o desafio de processamento de pedidos utiliz
 
 ## Fluxo de trabalho
 
-- Branch principal usada neste repositório: `develop`.
+- Branch principal usada neste repositório: `develop` (a antiga `codex/create-java-order-processing-system` foi removida).
 - Commits seguem o padrão Conventional Commits (ex.: `feat(pedidos): ...`).
 
 ## Tecnologias
