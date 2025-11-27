@@ -32,12 +32,23 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponse> getById(@PathVariable String orderId) {
+    public ResponseEntity<OrderResponse> getById(@PathVariable("orderId") String orderId) {
         return ResponseEntity.ok(orderService.findById(orderId));
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderResponse>> getByCustomer(@RequestParam String customerId) {
-        return ResponseEntity.ok(orderService.findByCustomer(customerId));
+    public ResponseEntity<List<OrderResponse>> getByCustomer(
+            @RequestParam(name = "customerId", required = false) String customerId) {
+
+        List<OrderResponse> response;
+
+        if (customerId == null || customerId.isBlank()) {
+            response = orderService.findAll();
+        } else {
+            response = orderService.findByCustomer(customerId);
+        }
+
+        return ResponseEntity.ok(response);
     }
+
 }

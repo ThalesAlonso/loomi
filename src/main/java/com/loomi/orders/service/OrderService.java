@@ -11,7 +11,6 @@ import com.loomi.orders.domain.model.OrderItemEntity;
 import com.loomi.orders.repository.OrderRepository;
 import com.loomi.orders.service.events.OrderCreatedEvent;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -93,5 +92,13 @@ public class OrderService {
             order.updateStatus(status);
             orderRepository.save(order);
         });
+    }
+
+    public List<OrderResponse> findAll() {
+        // Busca todos os pedidos e ordena por createdAt DESC (mais recentes primeiro)
+        return orderRepository.findAll().stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }
