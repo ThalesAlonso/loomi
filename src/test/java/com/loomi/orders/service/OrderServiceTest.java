@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loomi.orders.api.dto.OrderRequest;
 import com.loomi.orders.catalog.ProductCatalog;
 import com.loomi.orders.catalog.ProductCatalog.ProductRecord;
@@ -14,6 +15,7 @@ import com.loomi.orders.domain.model.OrderEntity;
 import com.loomi.orders.repository.OrderRepository;
 import com.loomi.orders.service.events.OrderCreatedEvent;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +39,7 @@ class OrderServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        service = new OrderService(productCatalog, orderRepository, new OrderMapper(new com.fasterxml.jackson.databind.ObjectMapper()), kafkaTemplate);
+        service = new OrderService(productCatalog, orderRepository, new OrderMapper(new ObjectMapper()), kafkaTemplate);
         when(orderRepository.save(any(OrderEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(kafkaTemplate.send(any(), any(), any())).thenReturn(null);
     }
@@ -52,7 +54,7 @@ class OrderServiceTest {
         request.setItems(List.of(item));
 
         when(productCatalog.findById("BOOK-CC-001"))
-                .thenReturn(Optional.of(new ProductRecord("BOOK-CC-001", "Clean Code", ProductType.PHYSICAL, new BigDecimal("10.00"), 10, true, null)));
+                .thenReturn(Optional.of(new ProductRecord("BOOK-CC-001", "Clean Code", ProductType.PHYSICAL, new BigDecimal("10.00"), 10, true, LocalDate.now().plusDays(1), null, null)));
 
         var response = service.create(request);
 
@@ -75,6 +77,6 @@ class OrderServiceTest {
 
         assertThatThrownBy(() -> service.create(request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Produto MISSING não encontrado");
+                .hasMessageContaining("Product MISSING not found");
     }
 }

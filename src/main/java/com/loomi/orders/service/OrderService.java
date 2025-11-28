@@ -43,14 +43,14 @@ public class OrderService {
 
         for (OrderRequest.OrderItemRequest item : request.getItems()) {
             ProductRecord product = productCatalog.findById(item.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("Produto %s não encontrado".formatted(item.getProductId())));
+                    .orElseThrow(() -> new IllegalArgumentException("Product %s not found".formatted(item.getProductId())));
             if (!product.active()) {
-                throw new IllegalArgumentException("Produto %s está indisponível".formatted(item.getProductId()));
+                throw new IllegalArgumentException("Product %s is not available".formatted(item.getProductId()));
+            }
+            if (item.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Quantity must be positive for product %s".formatted(product.productId()));
             }
             ProductType productType = product.productType();
-            if (item.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Quantidade deve ser positiva para o produto %s".formatted(product.productId()));
-            }
             BigDecimal itemTotal = product.price().multiply(BigDecimal.valueOf(item.getQuantity()));
             total = total.add(itemTotal);
             OrderItemEntity entity = OrderItemEntity.from(product.productId(), productType, item.getQuantity(), product.price(),
@@ -61,13 +61,13 @@ public class OrderService {
         orderRepository.save(order);
 
         publishCreatedEvent(order);
-        LOG.info("Pedido {} criado para o cliente {}", order.getOrderId(), order.getCustomerId());
+        LOG.info("Order {} created for customer {}", order.getOrderId(), order.getCustomerId());
         return orderMapper.toResponse(order);
     }
 
     public OrderResponse findById(String orderId) {
         OrderEntity entity = orderRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido %s não encontrado".formatted(orderId)));
+                .orElseThrow(() -> new IllegalArgumentException("Order %s not found".formatted(orderId)));
         return orderMapper.toResponse(entity);
     }
 
@@ -95,7 +95,6 @@ public class OrderService {
     }
 
     public List<OrderResponse> findAll() {
-        // Busca todos os pedidos e ordena por createdAt DESC (mais recentes primeiro)
         return orderRepository.findAll().stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .map(orderMapper::toResponse)

@@ -14,16 +14,18 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         return ResponseEntity.badRequest().body(Map.of(
-                "mensagem", "Requisição inválida",
+                "message", "Invalid request payload",
                 "timestamp", OffsetDateTime.now()
         ));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
-        HttpStatus status = ex.getMessage() != null && ex.getMessage().contains("não encontrado") ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
+        HttpStatus status = ex.getMessage() != null && ex.getMessage().toLowerCase().contains("not found")
+                ? HttpStatus.NOT_FOUND
+                : HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(Map.of(
-                "mensagem", ex.getMessage(),
+                "message", ex.getMessage(),
                 "timestamp", OffsetDateTime.now()
         ));
     }
@@ -31,7 +33,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "mensagem", ex.getMessage(),
+                "message", ex.getMessage(),
                 "timestamp", OffsetDateTime.now()
         ));
     }

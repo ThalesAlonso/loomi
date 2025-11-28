@@ -1,52 +1,49 @@
 # Order Processing System
 
-Implementação de referência para o desafio de processamento de pedidos utilizando Java (Spring Boot), arquitetura em camadas (MVC) e documentação via Swagger.
+Implementação de referência para o desafio de processamento de pedidos utilizando Java e Spring Boot, com validações por tipo de produto, publicação/consumo de eventos e persistência em PostgreSQL.
 
-## Fluxo de trabalho
-
-- Branch principal usada neste repositório: `develop`.
-- Commits seguem o padrão Conventional Commits (ex.: `feat(pedidos): ...`).
-
-## Tecnologias
-- Java 25
+## Stack
+- Java 21
 - Spring Boot 3
 - PostgreSQL
-- Apache Kafka/Redpanda
-- Swagger (Springdoc OpenAPI)
-- Docker e Docker Compose
+- Kafka/Redpanda
+- Docker + Docker Compose
 - Makefile para automação
 
-## Executando
+## Como executar
 
 ### Pré-requisitos
 - Docker e Docker Compose
-- Make
+- Make (opcional, mas recomendado)
 
-### Subir infraestrutura e aplicação
+### Subir tudo (app + dependências)
 ```bash
 make up
+# ou
+docker-compose up --build
 ```
+A aplicação sobe em `http://localhost:8080` e o Swagger em `/swagger-ui.html`.
+Endpoints de health/métricas via Actuator: `/actuator/health`, `/actuator/metrics`.
 
-### Encerrar serviços
+### Derrubar serviços
 ```bash
 make down
+# ou
+docker-compose down -v
 ```
 
 ### Build e testes locais
 ```bash
-make build
-make test
+make build   # mvn -DskipTests package
+make test    # mvn test
 ```
-
-A aplicação sobe em `http://localhost:8080` e a documentação Swagger fica disponível em `/swagger-ui.html`.
+> Se não tiver Maven instalado, use o fluxo Docker (`make up`) que realiza o build dentro do contêiner. Testes de integração usam Testcontainers e exigem Docker em execução; sem Docker eles serão automaticamente ignorados.
 
 ## Endpoints principais
-- `POST /api/orders` – cria pedidos com validações de catálogo e publica evento no Kafka.
-- `GET /api/orders/{orderId}` – consulta pedido por ID.
-- `GET /api/orders?customerId=` – lista pedidos por cliente.
+- `POST /api/orders` — cria pedidos validando catálogo, aplica snapshot de preço e publica evento.
+- `GET /api/orders/{orderId}` — consulta pedido por ID.
+- `GET /api/orders?customerId=` — lista pedidos por cliente (ordem decrescente de criação).
 
-## Testes
-- **Unitários**: cobertura da lógica principal de criação de pedidos (`OrderServiceTest`).
-
-## Uso de IA
-Este projeto foi auxiliado por IA para geração de boilerplate e organização inicial. Todo o código foi revisado manualmente para garantir adequação às regras de negócio descritas no desafio.
+## Notas
+- Credenciais e URLs são definidas via variáveis de ambiente (ver `docker-compose.yml` / `application.yml`).
+- Commits seguem Conventional Commits; branch principal: `develop`.

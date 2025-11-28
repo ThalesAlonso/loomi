@@ -1,5 +1,7 @@
 package com.loomi.orders.config;
 
+import com.loomi.orders.service.events.FraudAlertEvent;
+import com.loomi.orders.service.events.LowStockAlertEvent;
 import com.loomi.orders.service.events.OrderCreatedEvent;
 import com.loomi.orders.service.events.OrderResultEvent;
 import java.util.HashMap;
@@ -74,6 +76,32 @@ public class KafkaConfig {
 
     @Bean
     public KafkaTemplate<String, OrderResultEvent> orderResultKafkaTemplate(ProducerFactory<String, OrderResultEvent> factory) {
+        return new KafkaTemplate<>(factory);
+    }
+
+    @Bean
+    public ProducerFactory<String, LowStockAlertEvent> lowStockProducerFactory(KafkaProperties properties) {
+        Map<String, Object> config = new HashMap<>(properties.buildProducerProperties());
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(config);
+    }
+
+    @Bean
+    public KafkaTemplate<String, LowStockAlertEvent> lowStockKafkaTemplate(ProducerFactory<String, LowStockAlertEvent> factory) {
+        return new KafkaTemplate<>(factory);
+    }
+
+    @Bean
+    public ProducerFactory<String, FraudAlertEvent> fraudAlertProducerFactory(KafkaProperties properties) {
+        Map<String, Object> config = new HashMap<>(properties.buildProducerProperties());
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(config);
+    }
+
+    @Bean
+    public KafkaTemplate<String, FraudAlertEvent> fraudAlertKafkaTemplate(ProducerFactory<String, FraudAlertEvent> factory) {
         return new KafkaTemplate<>(factory);
     }
 }
