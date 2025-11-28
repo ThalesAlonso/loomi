@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,8 +72,8 @@ public class OrderService {
         return orderMapper.toResponse(entity);
     }
 
-    public List<OrderResponse> findByCustomer(String customerId) {
-        return orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId).stream()
+    public List<OrderResponse> findByCustomer(String customerId, int page, int size) {
+        return orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, PageRequest.of(page, size)).stream()
                 .map(orderMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -94,8 +95,8 @@ public class OrderService {
         });
     }
 
-    public List<OrderResponse> findAll() {
-        return orderRepository.findAll().stream()
+    public List<OrderResponse> findAll(int page, int size) {
+        return orderRepository.findAll(PageRequest.of(page, size)).stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .map(orderMapper::toResponse)
                 .collect(Collectors.toList());

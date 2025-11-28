@@ -10,6 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,9 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.CommonErrorHandler;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
@@ -60,9 +64,11 @@ public class KafkaConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent> orderCreatedListenerContainerFactory(
-            ConsumerFactory<String, OrderCreatedEvent> factory) {
+            ConsumerFactory<String, OrderCreatedEvent> factory,
+            ObjectProvider<CommonErrorHandler> errorHandlerProvider) {
         ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent> containerFactory = new ConcurrentKafkaListenerContainerFactory<>();
         containerFactory.setConsumerFactory(factory);
+        containerFactory.setCommonErrorHandler(errorHandlerProvider.getIfAvailable(this::defaultErrorHandler));
         return containerFactory;
     }
 
@@ -103,5 +109,11 @@ public class KafkaConfig {
     @Bean
     public KafkaTemplate<String, FraudAlertEvent> fraudAlertKafkaTemplate(ProducerFactory<String, FraudAlertEvent> factory) {
         return new KafkaTemplate<>(factory);
+    }
+
+    @Bean
+    public CommonErrorHandler defaultErrorHandler() {
+        // retry 3 times with 1s backoff; let Poison messages be skipped (no DLQ)
+        return new DefaultErrorHandler(new FixedBackOff(1000L, 3L));
     }
 }

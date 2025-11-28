@@ -38,14 +38,16 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<List<OrderResponse>> getByCustomer(
-            @RequestParam(name = "customerId", required = false) String customerId) {
+            @RequestParam(name = "customerId", required = false) String customerId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
 
         List<OrderResponse> response;
 
         if (customerId == null || customerId.isBlank()) {
-            response = orderService.findAll();
+            response = orderService.findAll(page, size);
         } else {
-            response = orderService.findByCustomer(customerId);
+            response = orderService.findByCustomer(customerId, page, size);
         }
 
         return ResponseEntity.ok(response);
