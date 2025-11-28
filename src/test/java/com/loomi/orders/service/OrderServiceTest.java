@@ -12,6 +12,7 @@ import com.loomi.orders.catalog.ProductCatalog;
 import com.loomi.orders.catalog.ProductCatalog.ProductRecord;
 import com.loomi.orders.domain.ProductType;
 import com.loomi.orders.domain.model.OrderEntity;
+import com.loomi.orders.repository.IdempotencyKeyRepository;
 import com.loomi.orders.repository.OrderRepository;
 import com.loomi.orders.service.events.OrderCreatedEvent;
 import java.math.BigDecimal;
@@ -32,6 +33,8 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
     @Mock
+    private IdempotencyKeyRepository idempotencyKeyRepository;
+    @Mock
     private KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
 
     private OrderService service;
@@ -39,7 +42,7 @@ class OrderServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        service = new OrderService(productCatalog, orderRepository, new OrderMapper(new ObjectMapper()), kafkaTemplate);
+        service = new OrderService(productCatalog, orderRepository, new OrderMapper(new ObjectMapper()), idempotencyKeyRepository, kafkaTemplate);
         when(orderRepository.save(any(OrderEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(kafkaTemplate.send(any(), any(), any())).thenReturn(null);
     }

@@ -113,7 +113,6 @@ public class KafkaConfig {
 
     @Bean
     public CommonErrorHandler defaultErrorHandler() {
-        // retry 3 times with 1s backoff; let Poison messages be skipped (no DLQ)
         return new DefaultErrorHandler(new FixedBackOff(1000L, 3L));
     }
 }

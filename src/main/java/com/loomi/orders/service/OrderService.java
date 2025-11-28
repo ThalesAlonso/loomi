@@ -6,8 +6,10 @@ import com.loomi.orders.catalog.ProductCatalog;
 import com.loomi.orders.catalog.ProductCatalog.ProductRecord;
 import com.loomi.orders.domain.OrderStatus;
 import com.loomi.orders.domain.ProductType;
+import com.loomi.orders.domain.model.IdempotencyKeyEntity;
 import com.loomi.orders.domain.model.OrderEntity;
 import com.loomi.orders.domain.model.OrderItemEntity;
+import com.loomi.orders.repository.IdempotencyKeyRepository;
 import com.loomi.orders.repository.OrderRepository;
 import com.loomi.orders.service.events.OrderCreatedEvent;
 import java.math.BigDecimal;
@@ -26,19 +28,36 @@ public class OrderService {
     private static final Logger LOG = LoggerFactory.getLogger(OrderService.class);
     private final ProductCatalog productCatalog;
     private final OrderRepository orderRepository;
+    private final IdempotencyKeyRepository idempotencyKeyRepository;
     private final OrderMapper orderMapper;
     private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
 
     public OrderService(ProductCatalog productCatalog, OrderRepository orderRepository, OrderMapper orderMapper,
+                        IdempotencyKeyRepository idempotencyKeyRepository,
                         KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate) {
         this.productCatalog = productCatalog;
         this.orderRepository = orderRepository;
         this.orderMapper = orderMapper;
+        this.idempotencyKeyRepository = idempotencyKeyRepository;
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Transactional
     public OrderResponse create(OrderRequest request) {
+        return create(request, null);
+    }
+
+    @Transactional
+    public OrderResponse create(OrderRequest request, String idempotencyKey) {
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            return idempotencyKeyRepository.findByIdempotencyKey(idempotencyKey)
+                    .flatMap(existing -> orderRepository.findByOrderId(existing.getOrderId()))
+                    .map(orderMapper::toResponse)
+                    .orElseGet(() -> createNewOrder(request, idempotencyKey));
+        }
+        return createNewOrder(request, null);
+    }
+
+    private OrderResponse createNewOrder(OrderRequest request, String idempotencyKey) {
         OrderEntity order = OrderEntity.create(request.getCustomerId());
         BigDecimal total = BigDecimal.ZERO;
 
@@ -60,6 +79,9 @@ public class OrderService {
         }
         order.setTotalAmount(total);
         orderRepository.save(order);
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            idempotencyKeyRepository.save(IdempotencyKeyEntity.of(idempotencyKey, order.getOrderId()));
+        }
 
         publishCreatedEvent(order);
         LOG.info("Order {} created for customer {}", order.getOrderId(), order.getCustomerId());

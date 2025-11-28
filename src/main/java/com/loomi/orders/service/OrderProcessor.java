@@ -30,6 +30,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.MDC;
 
 @Component
 public class OrderProcessor {
@@ -70,6 +71,8 @@ public class OrderProcessor {
             LOG.warn("Order {} not found, ignoring message", event.orderId());
             return;
         }
+        MDC.put("orderId", order.getOrderId());
+        MDC.put("customerId", order.getCustomerId());
         if (order.getStatus() != OrderStatus.PENDING) {
             LOG.info("Order {} already processed with status {}, skipping", order.getOrderId(), order.getStatus());
             return;

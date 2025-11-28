@@ -16,3 +16,9 @@ CREATE TABLE IF NOT EXISTS order_items (
     price_snapshot NUMERIC(19,2) NOT NULL,
     metadata TEXT
 );
+
+CREATE TABLE IF NOT EXISTS idempotency_keys (
+    idempotency_key VARCHAR(255) PRIMARY KEY,
+    order_id VARCHAR(255) NOT NULL REFERENCES orders(order_id) ON DELETE RESTRICT,
+    created_at TIMESTAMPTZ NOT NULL
+);
